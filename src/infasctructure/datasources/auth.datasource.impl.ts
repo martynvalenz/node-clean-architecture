@@ -1,6 +1,7 @@
 import { BcryptAdapter } from "../../config/bcrypt";
 import { UserModel } from "../../data/mongodb";
 import { AuthDatasource } from "../../domain/datasources/auth.datasource";
+import { LoginUserDto } from "../../domain/dtos/auth/login-user.dto";
 import { RegisterUserDto } from "../../domain/dtos/auth/register-user.dto";
 import { UserEntity } from "../../domain/entity/user.entity";
 import { CustomError } from "../../domain/errors/custom.error";
@@ -14,8 +15,21 @@ export class AuthDataSourceImpl implements AuthDatasource{
     private readonly hashPassword: HashFunction = BcryptAdapter.hash,
     private readonly compareFunction: CompareFunction = BcryptAdapter.compare
   ){}
-  async login(email: string, password: string): Promise<string> {
-    throw new Error("Method not implemented.");
+  async login(loginUserDto:LoginUserDto): Promise<UserEntity> {
+    const { email, password } = loginUserDto;
+
+    try {
+      // VERIFY THAT USER EXISTS
+      const user = await UserModel.findOne({email});
+      if(!user) throw CustomError.badRequest('No valid credentials');
+      const isMatching = await this.compareFunction(password,user.password);
+      if(!isMatching) throw CustomError.badRequest('Password is not valid');
+      return UserMapper.userEntityFromObject(user);
+    } 
+    catch (error) {
+      if(error instanceof CustomError) throw error;
+      throw CustomError.internalServer();
+    }
   }
 
   async register(registerUserDto: RegisterUserDto): Promise<UserEntity> {
