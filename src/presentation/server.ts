@@ -17,7 +17,10 @@ export class Server {
   }
 
   async start() {
+    // Middlewares
     this.app.use(express.json());
+    this.app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+    // Routes
     this.app.use(this.routes);
     await this.app.listen(this.port, () => {
       console.log(`Server listening on port http://localhost:${this.port}`);
