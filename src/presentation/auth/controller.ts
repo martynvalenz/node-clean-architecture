@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
 import { RegisterUserDto } from '../../domain/dtos/auth/register-user.dto';
+import { AuthRepository } from '../../domain/repositories/auth.repository';
 
 export class AuthController {
-  constructor() {
-    console.log('AuthController initialized');
-  }
+  constructor(
+    private readonly authRepository:AuthRepository,
+  ) {}
 
   loginUser = (req:Request, res:Response) => {
     res.json({ message: 'loginUser' });
@@ -15,6 +16,8 @@ export class AuthController {
     if (error) {
       return res.status(400).json({ error });
     }
-    res.json({ message: 'registerUser', registerUserDto })
+    this.authRepository.register(registerUserDto!)
+    .then(user => res.json(user))
+    .catch(error => res.status(500).json({ error }));
   }
 }
